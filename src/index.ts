@@ -2,7 +2,6 @@ import express, {Request, Response} from "express"
 import { accounts } from "./data"
 
 import cors from 'cors'
-import { request } from "http"
 
 const app = express()
 
@@ -84,6 +83,44 @@ app.post("/accounts", (req: Request, res: Response) => {
         res.status(errorCode).send(e.message)
     }
 })
+
+// GET BALANCE
+app.get("/account/balance", (req: Request, res: Response) => {
+    let errorCode = 400
+  
+    try {
+        const nome = req.body.name
+        const cpf = req.body.cpf
+
+        if(!nome){
+            errorCode = 401
+            throw new Error("Usuário não cadastrado")
+        }
+        if(!cpf){
+            errorCode = 401
+            throw new Error("É necessário informar o CPF de um usuário cadastrado")
+        }
+
+        const buscaUsuario = accounts.filter((account)=>{
+            if (cpf === account.cpf){
+                return account.balance
+            }
+        })
+
+        const saldo = buscaUsuario.map((saldo)=>{
+            return saldo.balance
+        })
+        
+        res.status(200).send(saldo)
+        
+     } catch (e:any){
+        res.status(errorCode).send(e.message)
+    }
+
+})
+
+
+
 
 
 app.listen(3003, () => {
