@@ -119,8 +119,66 @@ app.get("/account/balance", (req: Request, res: Response) => {
 
 })
 
+// ADD BALANCE
 
+app.put("/accounts/account", (req: Request, res: Response) => {
+    let errorCode = 400
 
+    try {
+
+        const { name, value, cpf } = req.body
+
+        if (!cpf || !name || !value) {
+            errorCode = 422
+            throw new Error("Passe todos os paramentros");
+        }
+
+        if (typeof (name) !== "string") {
+            errorCode = 422
+            throw new Error("Name inválido");
+        }
+
+        if (typeof (cpf) !== "string" || isNaN(Number(cpf)) || cpf.length !== 11 || cpf.includes(" ")) {
+            errorCode = 422
+            throw new Error("CPF inválido");
+        }
+
+        if (typeof (value) !== "number") {
+            errorCode = 422
+            throw new Error("Valor inválido");
+        }
+
+        let check: boolean = false
+
+        for (const account of accounts) {
+            if (account.name === name && account.cpf === cpf) {
+                check = true
+            }
+        }
+        if (check === false) {
+            errorCode = 422
+            throw new Error("Please check name and cpf");
+        }
+        let userBalance = {}
+        accounts.map((account) => {
+            if (account.name === name && account.cpf === cpf) {
+                account.balance = account.balance + value
+                 userBalance = {
+                    name: account.name,
+                    cpf: account.cpf,
+                    birthDate: account.birthDate,
+                    balance: account.balance
+                }
+            
+            return userBalance
+    }})
+        
+        res.status(200).send(userBalance)
+        
+    } catch (error: any) {
+        res.status(errorCode).send(error.message)
+    }
+})
 
 
 app.listen(3003, () => {
