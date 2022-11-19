@@ -2,6 +2,7 @@ import express, {Request, Response} from "express"
 import { accounts } from "./data"
 
 import cors from 'cors'
+import { UserBankStatement } from "./types"
 
 const app = express()
 
@@ -175,6 +176,111 @@ app.put("/accounts/account", (req: Request, res: Response) => {
         
         res.status(200).send(userBalance)
         
+    } catch (error: any) {
+        res.status(errorCode).send(error.message)
+    }
+})
+
+//MAKE PAYMENT
+
+app.post("/accounts/:cpf/payment", (req: Request, res: Response) => {
+    let errorCode = 400
+    try {
+        const cpf = req.params.cpf
+        const { value, description } = req.body
+        let { date } = req.body 
+
+        if(!date) {
+            errorCode = 402
+            throw new Error("Please, enter a valid date.")
+        }
+
+        const [ dd, mm, yyyy ] = date.split('/')
+        const paymentDate = new Date (`${dd}-${mm}-${yyyy}`)
+        if (!value || !paymentDate || !description) {
+            errorCode = 422
+            throw new Error("Payment could not be made, please check your details.")
+        }
+        const accountClient = accounts.findIndex(client => client.cpf === cpf)
+        if (accountClient < 0) {
+            errorCode = 404
+            throw new Error("Client account not found.")
+        }
+
+
+        const client = accounts[accountClient]
+        const newTransaction : UserBankStatement = {
+            value,
+            description,
+            date
+        }
+        if (value > client.balance){
+            errorCode = 405
+            throw new Error("Insufficient balance.")
+        }
+        client.statement.push(newTransaction)
+
+        if (newTransaction.value > 0) {
+            let purchaseMade = newTransaction.value
+            client.balance = client.balance - purchaseMade
+            console.log ("Amount paid:",purchaseMade)
+            console.log("Balance:",client.balance);
+            
+        }
+        res.status(200).send("Thank you for your payment!")
+
+    } catch (error: any) {
+        res.status(errorCode).send(error.message)
+    }
+})
+
+// TRANSFER
+
+app.put("/banking/transfer", (req: Request, res: Response) => {
+    let errorCode = 400
+    try {
+        const { name, cpf, recipient, cpfRecipient, transferValue } = req.body
+
+        if (!name || !cpf || !recipient || !cpfRecipient || !transferValue) {
+            errorCode = 405
+            throw new Error("Fill in all information.")
+        }
+
+        const fetchUser = accounts.find((clientUser) => {
+            return clientUser.name === name && clientUser.cpf === cpf 
+        })
+        const fetchUserRecipient = accounts.find((clientUserRecipient) => {
+            return clientUserRecipient.name === name && clientUserRecipient.cpf === cpf 
+        })
+
+        if (!fetchUser) {
+            errorCode = 405
+            throw new Error("User not found. Please try again.")
+        }
+        if (!fetchUserRecipient) {
+            errorCode = 402
+            throw new Error("User recipient not found. Please try again.")
+        }
+
+        if (transferValue < 0) {
+            errorCode = 403
+            throw new Error("Your transfer must be greater than zero.")
+        }
+
+        if (transferValue > fetchUser.balance) {
+            errorCode = 403
+            throw new Error("Sorry, not enough money.")
+        }
+
+        const newBalanceUser = fetchUser.balance -= transferValue
+        const newBalanceUserRecipient = fetchUserRecipient.balance += transferValue
+        
+        res.status(200).send(
+            `Transfer completed successfully! 
+            Saldo do remetente ${name}: ${newBalanceUser}. 
+            Saldo do destinatário ${recipient}: ${newBalanceUserRecipient}.`
+        )
+
     } catch (error: any) {
         res.status(errorCode).send(error.message)
     }
