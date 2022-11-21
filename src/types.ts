@@ -12,3 +12,4 @@ export type UserBankStatement = {
     date: string,
     description: string
 }
+

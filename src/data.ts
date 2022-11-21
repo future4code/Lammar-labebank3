@@ -5,7 +5,7 @@ export let accounts: allTypes.UserAccount[]= [
         name: "Ana Laura", 
         cpf: "001.002.003-04", 
         birthDate: "10/04/1998",
-        balance: 0,
+        balance: 3000,
         statement: [{
             value: 500,
             date: "12/11/2022",
@@ -22,5 +22,17 @@ export let accounts: allTypes.UserAccount[]= [
             date: "17/08/2022",
             description: "Feira"
         }]
+    },
+    {
+        name: " ", 
+        cpf: "234.111.683-66", 
+        birthDate: "21/12/2000",
+        balance: 10,
+        statement: [{
+            value: 200,
+            date: "17/08/2022",
+            description: "Feira"
+        }]
     }
+
 ]
